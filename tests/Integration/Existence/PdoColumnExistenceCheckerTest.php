@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Chrismou\StringMint\Tests\Integration\Existence;
 
+use Chrismou\StringMint\Exception\ExistenceCheckException;
 use Chrismou\StringMint\Exception\InvalidTableNameException;
 use Chrismou\StringMint\Existence\PdoColumnExistenceChecker;
 use Chrismou\StringMint\Tests\Support\PdoTestCase;
 use Closure;
+use PDO;
+use PDOException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -18,7 +21,7 @@ final class PdoColumnExistenceCheckerTest extends PdoTestCase
     public function testReturnsFalseWhenTheValueIsNotInTheTable(Closure $pdoFactory): void
     {
         $pdo = $pdoFactory();
-        $pdo->exec('CREATE TABLE IF NOT EXISTS "links" ("slug" TEXT NOT NULL PRIMARY KEY)');
+        self::createLinksTable($pdo);
         $checker = new PdoColumnExistenceChecker($pdo, 'links', 'slug');
         $this->assertFalse($checker->exists('abc123'));
     }
@@ -28,8 +31,8 @@ final class PdoColumnExistenceCheckerTest extends PdoTestCase
     public function testReturnsTrueWhenTheValueIsInTheTable(Closure $pdoFactory): void
     {
         $pdo = $pdoFactory();
-        $pdo->exec('CREATE TABLE IF NOT EXISTS "links" ("slug" TEXT NOT NULL PRIMARY KEY)');
-        $pdo->exec("INSERT INTO \"links\" (\"slug\") VALUES ('abc123')");
+        self::createLinksTable($pdo);
+        self::insertLink($pdo, 'abc123');
         $checker = new PdoColumnExistenceChecker($pdo, 'links', 'slug');
         $this->assertTrue($checker->exists('abc123'));
     }
@@ -39,9 +42,53 @@ final class PdoColumnExistenceCheckerTest extends PdoTestCase
     public function testReturnsFalseForADifferentValue(Closure $pdoFactory): void
     {
         $pdo = $pdoFactory();
-        $pdo->exec('CREATE TABLE IF NOT EXISTS "links" ("slug" TEXT NOT NULL PRIMARY KEY)');
-        $pdo->exec("INSERT INTO \"links\" (\"slug\") VALUES ('abc123')");
+        self::createLinksTable($pdo);
+        self::insertLink($pdo, 'abc123');
         $checker = new PdoColumnExistenceChecker($pdo, 'links', 'slug');
+        $this->assertFalse($checker->exists('xyz789'));
+    }
+
+    #[Test]
+    #[DataProvider('pdoDataset')]
+    public function testMissingTableThrowsExistenceCheckExceptionInsteadOfReportingNotFound(Closure $pdoFactory): void
+    {
+        $pdo = $pdoFactory(); // No links table.
+        $checker = new PdoColumnExistenceChecker($pdo, 'links', 'slug');
+
+        $caught = null;
+        try {
+            $checker->exists('abc123');
+        } catch (ExistenceCheckException $e) {
+            $caught = $e;
+        }
+
+        $this->assertNotNull($caught);
+        $this->assertInstanceOf(PDOException::class, $caught->getPrevious());
+    }
+
+    #[Test]
+    #[DataProvider('pdoDataset')]
+    public function testMissingTableThrowsExistenceCheckExceptionUnderErrorModeSilent(Closure $pdoFactory): void
+    {
+        $pdo = $pdoFactory(); // No links table.
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
+        $checker = new PdoColumnExistenceChecker($pdo, 'links', 'slug');
+
+        $this->expectException(ExistenceCheckException::class);
+        $checker->exists('abc123');
+    }
+
+    #[Test]
+    #[DataProvider('pdoDataset')]
+    public function testWorksWhenThePdoIsInErrorModeSilent(Closure $pdoFactory): void
+    {
+        $pdo = $pdoFactory();
+        self::createLinksTable($pdo);
+        self::insertLink($pdo, 'abc123');
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
+        $checker = new PdoColumnExistenceChecker($pdo, 'links', 'slug');
+
+        $this->assertTrue($checker->exists('abc123'));
         $this->assertFalse($checker->exists('xyz789'));
     }
 

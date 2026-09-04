@@ -1,8 +1,11 @@
 * text=auto
 
-tests/          export-ignore
-.github/        export-ignore
-pint.json       export-ignore
-phpunit.xml.dist export-ignore
-phpstan.neon    export-ignore
-.editorconfig   export-ignore
+/.editorconfig      export-ignore
+/.gitattributes     export-ignore
+/.github/           export-ignore
+/.gitignore         export-ignore
+/CLAUDE.md          export-ignore
+/phpstan.neon       export-ignore
+/phpunit.xml.dist   export-ignore
+/pint.json          export-ignore
+/tests/             export-ignore

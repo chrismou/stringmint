@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chrismou\StringMint\Tests\Support;
 
 use Chrismou\StringMint\Counter\CounterTableInstaller;
+use Chrismou\StringMint\Counter\Pdo\DialectResolver;
 use Closure;
 use PDO;
 use PDOStatement;
@@ -47,14 +48,62 @@ abstract class PdoTestCase extends TestCase
         ];
 
         if (PdoFactory::fromEnv('STRINGMINT_MYSQL_DSN') !== null) {
-            $entries['MySQL'] = [fn (): PDO => PdoFactory::fromEnv('STRINGMINT_MYSQL_DSN') ?? throw new RuntimeException('STRINGMINT_MYSQL_DSN became unavailable.')];
+            $entries['MySQL'] = [fn (): PDO => self::freshConnectionFromEnv('STRINGMINT_MYSQL_DSN')];
         }
 
         if (PdoFactory::fromEnv('STRINGMINT_PGSQL_DSN') !== null) {
-            $entries['PostgreSQL'] = [fn (): PDO => PdoFactory::fromEnv('STRINGMINT_PGSQL_DSN') ?? throw new RuntimeException('STRINGMINT_PGSQL_DSN became unavailable.')];
+            $entries['PostgreSQL'] = [fn (): PDO => self::freshConnectionFromEnv('STRINGMINT_PGSQL_DSN')];
         }
 
         return $entries;
+    }
+
+    /**
+     * Connects to a server-backed database from its env DSN and drops the tables the integration
+     * tests create, so every test starts from the same empty state SQLite's in-memory database gives.
+     */
+    private static function freshConnectionFromEnv(string $envVariable): PDO
+    {
+        $pdo = PdoFactory::fromEnv($envVariable)
+            ?? throw new RuntimeException("{$envVariable} became unavailable.");
+
+        (new CounterTableInstaller($pdo))->uninstall();
+        $pdo->exec('DROP TABLE IF EXISTS ' . self::quoteIdentifier($pdo, 'links'));
+
+        return $pdo;
+    }
+
+    /**
+     * Quotes an identifier the way the connection's dialect expects (backticks on MySQL, double quotes elsewhere).
+     */
+    protected static function quoteIdentifier(PDO $pdo, string $identifier): string
+    {
+        return DialectResolver::resolve($pdo)->quoteIdentifier($identifier);
+    }
+
+    /**
+     * Creates the "links" table (single "slug" column, primary key) that the existence-checker tests use.
+     */
+    protected static function createLinksTable(PDO $pdo): void
+    {
+        $pdo->exec(
+            'CREATE TABLE IF NOT EXISTS ' . self::quoteIdentifier($pdo, 'links')
+                . ' (' . self::quoteIdentifier($pdo, 'slug') . ' VARCHAR(191) NOT NULL PRIMARY KEY)',
+        );
+    }
+
+    /**
+     * Inserts one slug into the "links" table.
+     */
+    protected static function insertLink(PDO $pdo, string $slug): void
+    {
+        $stmt = $pdo->prepare(
+            'INSERT INTO ' . self::quoteIdentifier($pdo, 'links')
+                . ' (' . self::quoteIdentifier($pdo, 'slug') . ') VALUES (?)',
+        );
+        if ($stmt === false || $stmt->execute([$slug]) === false) {
+            throw new AssertionFailedError("Failed to insert slug '{$slug}' into the links table.");
+        }
     }
 
     /**

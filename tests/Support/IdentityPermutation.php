@@ -11,7 +11,7 @@ use Chrismou\StringMint\Permutation\KeyspacePermutationInterface;
  *
  * Makes the relationship between counter values and encoded strings deterministic, so tests can
  * assert exact exhaustion boundaries without knowing the Feistel output. Intentionally ignores
- * the tweak - acceptable in tests (the plan acknowledges this in side effect 23).
+ * the tweak, which is acceptable only in tests.
  */
 final class IdentityPermutation implements KeyspacePermutationInterface
 {

@@ -159,7 +159,7 @@ final class PermutationGeneratorTest extends TestCase
         $this->assertNull($e->length()); // forRange sets length to null
     }
 
-    // --- no exhaustion memo (trim T2) ---
+    // --- no exhaustion memo: every call at an exhausted length burns one counter index ---
 
     #[Test]
     public function testASecondGenerateWithAutoLengthIncrementAfterExhaustionStillReturnsAThreeCharString(): void
@@ -364,7 +364,7 @@ final class PermutationGeneratorTest extends TestCase
         $gen->generate();
     }
 
-    // --- counter name namespaces the permutation (A1) ---
+    // --- counter name namespaces the permutation ---
 
     #[Test]
     public function testTwoGeneratorsWithDifferentCounterNamesProduceDifferentSequences(): void

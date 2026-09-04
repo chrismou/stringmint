@@ -6,6 +6,7 @@ namespace Chrismou\StringMint\Existence;
 
 use Chrismou\StringMint\Counter\Pdo\DialectResolver;
 use Chrismou\StringMint\Counter\Pdo\PdoDialectInterface;
+use Chrismou\StringMint\Exception\ExistenceCheckException;
 use Chrismou\StringMint\Exception\InvalidTableNameException;
 use PDO;
 use PDOException;
@@ -16,6 +17,9 @@ use PDOException;
  * Uses SELECT 1 FROM {table} WHERE {column} = ? for maximum portability across drivers.
  * Table and column names are validated against a safe identifier regex (they cannot be bound
  * as query parameters and are inlined into the SQL).
+ *
+ * Database failures are never swallowed: a checker that silently answered "does not exist" on a
+ * misnamed table or a dropped connection would let the generator issue colliding strings.
  */
 final readonly class PdoColumnExistenceChecker implements ExistenceCheckerInterface
 {
@@ -54,6 +58,11 @@ final readonly class PdoColumnExistenceChecker implements ExistenceCheckerInterf
 
     /**
      * Returns true when a row with $candidate in the configured column exists.
+     *
+     * Works with any PDO error mode: prepare() / execute() returning false is treated the same as a
+     * thrown PDOException.
+     *
+     * @throws ExistenceCheckException when the query cannot be prepared or executed
      */
     public function exists(string $candidate): bool
     {
@@ -61,18 +70,36 @@ final readonly class PdoColumnExistenceChecker implements ExistenceCheckerInterf
             $stmt = $this->pdo->prepare($this->sql);
 
             if ($stmt === false) {
-                return false;
+                throw $this->failure('prepare', $this->pdo->errorInfo());
             }
 
-            $result = $stmt->execute([$candidate]);
-
-            if ($result === false) {
-                return false;
+            if ($stmt->execute([$candidate]) === false) {
+                throw $this->failure('execute', $stmt->errorInfo());
             }
 
             return $stmt->fetchColumn() !== false;
-        } catch (PDOException) {
-            return false;
+        } catch (PDOException $e) {
+            throw new ExistenceCheckException(
+                "Existence check failed: {$e->getMessage()}",
+                (int) $e->getCode(),
+                $e,
+            );
         }
+    }
+
+    /**
+     * Builds the exception for a false return from prepare() or execute() (ERRMODE_SILENT / ERRMODE_WARNING).
+     *
+     * @param array{0?: string|null, 1?: int|string|null, 2?: string|null} $errorInfo
+     */
+    private function failure(string $step, array $errorInfo): ExistenceCheckException
+    {
+        $message = $errorInfo[2] ?? 'unknown error';
+
+        return new ExistenceCheckException(
+            "Existence check failed to {$step} the query: {$message}",
+            (int) ($errorInfo[0] ?? 0),
+            new PDOException($message, (int) ($errorInfo[0] ?? 0)),
+        );
     }
 }

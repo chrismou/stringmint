@@ -9,8 +9,8 @@ Its headline strategy walks a keyed Feistel permutation of the whole keyspace dr
 counter, so strings are unique by construction with no existence check or retry. A second,
 probabilistic strategy (random + existence check) is included for setups without a counter table.
 
-The package is unreleased and has no git history yet. Backwards compatibility is not a concern: delete
-old APIs rather than deprecating them.
+The package has no tagged release yet. Until 1.0.0 is tagged, backwards compatibility is not a concern:
+delete old APIs rather than deprecating them.
 
 ## Commands
 
@@ -34,7 +34,10 @@ clean before a change is considered done.
 
 Integration tests run against in-memory SQLite by default. Setting `STRINGMINT_MYSQL_DSN` /
 `STRINGMINT_PGSQL_DSN` (plus `_USER` / `_PASSWORD`) adds MySQL / PostgreSQL entries to the
-`PdoTestCase::pdoDataset()` data provider; see `phpunit.xml.dist` for the variable names.
+`PdoTestCase::pdoDataset()` data provider; see `phpunit.xml.dist` for the variable names. Server-backed
+connections drop the `stringmint_counters` and `links` tables before each test. CI runs both servers on
+one PHP version. Any SQL written in tests must go through `PdoTestCase::quoteIdentifier()` (or the
+`createLinksTable()` / `insertLink()` helpers): MySQL treats double-quoted names as string literals.
 
 ## Architecture
 
@@ -70,11 +73,14 @@ Supporting pieces, each in its own namespace under `src/`:
   table and is a separate step from generation.
 - **`Existence/`**: `ExistenceCheckerInterface` is read-only. Nothing in the library writes back to
   a checker; the application's own insert is what makes a string "exist". `InMemoryExistenceChecker`
-  has `remember()` but the generators never call it.
+  has `remember()` but the generators never call it. `PdoColumnExistenceChecker` fails closed: a
+  database error throws `ExistenceCheckException`, never "does not exist".
 - **`Exception/`**: all exceptions implement the `StringMintExceptionInterface` marker.
 
 Interfaces carry an `Interface` suffix. Table and column names are validated against an identifier
-regex and inlined into SQL, since they cannot be bound as parameters.
+regex and inlined into SQL, since they cannot be bound as parameters. Every identifier, including the
+fixed counter column names, is quoted through the dialect's `quoteIdentifier()`; never hard-code
+double quotes in SQL.
 
 ### Do-not-change invariants
 

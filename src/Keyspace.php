@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chrismou\StringMint;
 
 use Chrismou\StringMint\Alphabet\AlphabetInterface;
+use Chrismou\StringMint\Exception\InvalidAlphabetException;
 use Chrismou\StringMint\Exception\InvalidLengthException;
 use RuntimeException;
 
@@ -28,12 +29,21 @@ final readonly class Keyspace
      * Constructs a Keyspace for the given alphabet.
      *
      * @throws RuntimeException when running on 32-bit PHP (PHP_INT_SIZE !== 8)
+     * @throws InvalidAlphabetException when the alphabet reports fewer than two symbols
      */
     public function __construct(private AlphabetInterface $alphabet)
     {
         // This package requires 64-bit PHP. On 32-bit PHP, 2**62 would silently become a float.
         if (PHP_INT_SIZE !== 8) {
             throw new RuntimeException('chrismou/stringmint requires 64-bit PHP (PHP_INT_SIZE must be 8).');
+        }
+
+        // AbstractAlphabet enforces this already; the guard covers hand-rolled AlphabetInterface
+        // implementations, where a base of 1 would loop forever and a base of 0 would divide by zero.
+        if ($alphabet->size() < 2) {
+            throw new InvalidAlphabetException(
+                "An alphabet must contain at least 2 characters, got {$alphabet->size()}.",
+            );
         }
     }
 

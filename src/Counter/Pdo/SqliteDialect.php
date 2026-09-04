@@ -12,7 +12,7 @@ use PDO;
  * Uses double-quoted identifier quoting (standard SQL) and returns USE_COMPARE_AND_SWAP from
  * incrementAndFetch() to delegate to PdoCounterStore's portable compare-and-swap loop. This avoids
  * relying on RETURNING (SQLite >= 3.35 only) and keeps the SQL dialect-agnostic enough to serve
- * as a fallback for drivers not explicitly supported (trim T3).
+ * as a fallback for drivers not explicitly supported.
  *
  * CREATE TABLE IF NOT EXISTS and DROP TABLE IF EXISTS are standard SQLite syntax. Unknown drivers
  * receiving this dialect on a first install may need installSql() pasted into their own tool or a

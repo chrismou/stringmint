@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- PHPUnit 11 as the test runner and PHPStan level 8 static analysis as part of the development tooling.
 - `UniqueStringGeneratorInterface` interface with `generate()` and `generateWithAutoLengthIncrement()`.
 - `PermutationGenerator`: guaranteed-unique strings via a keyed Feistel permutation and a PDO-backed counter.
 - `RandomGenerator`: probabilistic unique strings via CSPRNG with existence-check retries.
@@ -29,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CounterTableInstaller`: idempotent table creation and removal; exposes raw SQL for custom migration tools.
 - Dialect implementations for MySQL, PostgreSQL, SQL Server, and SQLite (also the fallback for unknown drivers).
 - `ExistenceCheckerInterface` interface with `CallableExistenceChecker`, `NeverExistsChecker`, `InMemoryExistenceChecker`
-  and `PdoColumnExistenceChecker`.
+  and `PdoColumnExistenceChecker`. `PdoColumnExistenceChecker` fails closed, throwing `ExistenceCheckException` on
+  database errors instead of reporting the candidate as unused.
 - `StringMintExceptionInterface` marker interface and full exception hierarchy.
 - `PermutationGenerator::create()` one-liner named constructor for quick PDO-backed setup, with an optional `alphabet` argument.

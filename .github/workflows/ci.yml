@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
+      - name: Validate composer.json
+        run: composer validate --strict
+
       - name: Run linter
         run: composer lint
 
@@ -36,3 +39,56 @@ jobs:
 
       - name: Run tests
         run: composer test
+
+  databases:
+    runs-on: ubuntu-latest
+    name: MySQL and PostgreSQL
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: stringmint_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: stringmint_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_sqlite, pdo_mysql, pdo_pgsql
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Run integration tests against MySQL and PostgreSQL
+        run: composer test -- --testsuite Integration
+        env:
+          STRINGMINT_MYSQL_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=stringmint_test'
+          STRINGMINT_MYSQL_USER: root
+          STRINGMINT_MYSQL_PASSWORD: root
+          STRINGMINT_PGSQL_DSN: 'pgsql:host=127.0.0.1;port=5432;dbname=stringmint_test'
+          STRINGMINT_PGSQL_USER: postgres
+          STRINGMINT_PGSQL_PASSWORD: postgres

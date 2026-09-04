@@ -24,7 +24,7 @@
     "support": {
         "source": "https://github.com/chrismou/stringmint",
         "issues": "https://github.com/chrismou/stringmint/issues",
-        "docs": "https://github.com/chrismou/stringmint/README.md"
+        "docs": "https://github.com/chrismou/stringmint/blob/main/README.md"
     },
     "require": {
         "php": "^8.2"

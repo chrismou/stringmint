@@ -5,14 +5,14 @@ existence checks or retries required, and zero dependencies.
 
 ## What it does
 
-Out of the box, StringMint generates short, URL-safe strings that are guaranteed unique without ever needing 
-to query your DB table to check it's not been used . Instead of picking random characters and checking whether 
-they are taken, it walks a keyed permutation of the entire keyspace driven by a single counter, so every 
-string is distinct, looks random, reveals nothing about how many came before it, and never needs a retry. When a 
-length is exhausted it moves up to the next one.
+Out of the box, StringMint generates short, URL-safe strings that are guaranteed unique without ever needing
+to query your DB table to check that a string is not already in use. Instead of picking random characters and
+checking whether they are taken, it walks a keyed permutation of the entire keyspace driven by a single counter,
+so every string is distinct, looks random, reveals nothing about how many came before it, and never needs a
+retry. When a length is exhausted it moves up to the next one.
 
 It works with any PDO driver, has no runtime dependencies, and also ships a random-with-existence-check
-generator for cases where a counter table is not wanted. The two strategies compared:
+generator for cases where a counter table is not wanted.
 
 ## But why?
 
@@ -190,7 +190,7 @@ without further schema changes.
 
 **Start at 2 characters?** `generate()` with the default alphabet exhausts at 4,356 strings.
 Prefer `generateWithAutoLengthIncrement()` with a configured `maximumLength` for short starting
-lengths so the app never takes down unexpectedly.
+lengths so the app never fails unexpectedly when a length runs out.
 
 ## Dependency injection examples
 
@@ -198,6 +198,12 @@ lengths so the app never takes down unexpectedly.
 
 ```php
 use Chrismou\StringMint\Alphabet\UrlSafe;
+use Chrismou\StringMint\Counter\PdoCounterStore;
+use Chrismou\StringMint\Existence\PdoColumnExistenceChecker;
+use Chrismou\StringMint\Generator\PermutationGenerator;
+use Chrismou\StringMint\LengthPolicy;
+use Chrismou\StringMint\Permutation\FeistelPermutation;
+use Chrismou\StringMint\UniqueStringGeneratorInterface;
 
 $this->app->singleton(UniqueStringGeneratorInterface::class, function ($app) {
     return new PermutationGenerator(
@@ -213,7 +219,7 @@ $this->app->singleton(UniqueStringGeneratorInterface::class, function ($app) {
 **Symfony `services.yaml`:**
 
 ```yaml
-App\Service\UniqueStringGeneratorInterface:
+Chrismou\StringMint\UniqueStringGeneratorInterface:
     class: Chrismou\StringMint\Generator\PermutationGenerator
     arguments:
         - '@Chrismou\StringMint\LengthPolicy'
@@ -328,7 +334,8 @@ you have a specific reason not to.
   is needed (the permutation guarantees uniqueness by construction)
 - `InMemoryExistenceChecker` - set-backed; for tests, single-process use, and custom blocklists
 - `CallableExistenceChecker(fn(string $c): bool)` - closure-backed; quick wiring and blocklists
-- `PdoColumnExistenceChecker($pdo, $table, $column)` - `SELECT 1` query; production use
+- `PdoColumnExistenceChecker($pdo, $table, $column)` - `SELECT 1` query; production use. Fails closed:
+  a database error throws `ExistenceCheckException` rather than reporting the candidate as unused
 
 **Blocklist pattern** - reject banned words or reserved slugs:
 
@@ -349,7 +356,8 @@ $checker = new CallableExistenceChecker(
 | `InvalidTableNameException` | `\InvalidArgumentException` | Table/column name fails identifier validation |
 | `UnableToGenerateUniqueStringException` | `\RuntimeException` | Base: generation failed |
 | `KeyspaceExhaustedException` | above | Exact or inferred exhaustion; exposes `length()` |
-| `CounterStoreException` | `\RuntimeException` | PDO database error |
+| `CounterStoreException` | `\RuntimeException` | PDO database error in `PdoCounterStore` |
+| `ExistenceCheckException` | `\RuntimeException` | PDO database error in `PdoColumnExistenceChecker` |
 
 `KeyspaceExhaustedException::inferredForLength()` is thrown by `RandomGenerator` after
 `maximumAttemptsPerLength` consecutive collisions. This may fire on a merely crowded pool rather
@@ -370,9 +378,11 @@ atomic.
 
 ## Error handling
 
-The `PdoCounterStore` works with any PDO error mode (ERRMODE_SILENT, ERRMODE_WARNING, or
-ERRMODE_EXCEPTION) and wraps all database failures in `CounterStoreException`, leaving the
-original `PDOException` as the previous exception if available.
+`PdoCounterStore` and `PdoColumnExistenceChecker` work with any PDO error mode (ERRMODE_SILENT,
+ERRMODE_WARNING, or ERRMODE_EXCEPTION) and wrap all database failures in `CounterStoreException` and
+`ExistenceCheckException` respectively, leaving the original `PDOException` as the previous exception
+if available. Neither ever treats a database error as "not found": a broken existence check would let
+the generator issue strings that may already be in use.
 
 ## Do-not-change list
 
@@ -434,7 +444,8 @@ composer analyse      # run PHPStan level 8 static analysis
 composer lint         # check PSR-12 formatting (pint --test)
 composer lint:fix     # auto-fix formatting
 
-# Optional MySQL/PostgreSQL integration tests:
+# Optional MySQL/PostgreSQL integration tests (the tests drop and recreate the
+# stringmint_counters and links tables in that database, so use a throwaway one):
 STRINGMINT_MYSQL_DSN="mysql:host=127.0.0.1;dbname=test" STRINGMINT_MYSQL_USER=root composer test
 STRINGMINT_PGSQL_DSN="pgsql:host=127.0.0.1;dbname=test" STRINGMINT_PGSQL_USER=postgres composer test
 ```

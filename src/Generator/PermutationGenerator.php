@@ -151,7 +151,7 @@ final readonly class PermutationGenerator implements UniqueStringGeneratorInterf
             }
 
             // Pass the counter name as the tweak so counters sharing a secret and length still
-            // produce independent bijections (revision 4, A1).
+            // produce independent bijections.
             $permuted = $this->permutation->permute($index, $capacity, $this->counterStore->name());
             $candidate = $this->encodeIndex($permuted, $length);
 

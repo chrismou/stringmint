@@ -88,13 +88,15 @@ final class CounterTableInstallerTest extends PdoTestCase
         $pdo = $pdoFactory();
         $installer = new CounterTableInstaller($pdo);
         $installer->install();
-        $pdo->exec(
-            'INSERT INTO "stringmint_counters" ("name", "string_length", "counter_value") VALUES (\'default\', 3, 0)',
-        );
-        $pdo->exec(
-            'INSERT INTO "stringmint_counters" ("name", "string_length", "counter_value") VALUES (\'default\', 4, 0)',
-        );
-        $count = $pdo->query('SELECT COUNT(*) FROM "stringmint_counters"')->fetchColumn();
+        $table = self::quoteIdentifier($pdo, 'stringmint_counters');
+        $columns = implode(', ', [
+            self::quoteIdentifier($pdo, 'name'),
+            self::quoteIdentifier($pdo, 'string_length'),
+            self::quoteIdentifier($pdo, 'counter_value'),
+        ]);
+        $pdo->exec("INSERT INTO {$table} ({$columns}) VALUES ('default', 3, 0)");
+        $pdo->exec("INSERT INTO {$table} ({$columns}) VALUES ('default', 4, 0)");
+        $count = self::queryOrFail($pdo, "SELECT COUNT(*) FROM {$table}")->fetchColumn();
         $this->assertSame(2, (int) $count);
     }
 

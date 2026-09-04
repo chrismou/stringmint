@@ -34,6 +34,9 @@ final readonly class PdoCounterStore implements CounterStoreInterface
 
     private PdoDialectInterface $dialect;
     private string $quotedTable;
+    private string $quotedNameColumn;
+    private string $quotedLengthColumn;
+    private string $quotedValueColumn;
 
     /**
      * @throws InvalidTableNameException when the table name fails the identifier regex
@@ -61,6 +64,11 @@ final readonly class PdoCounterStore implements CounterStoreInterface
 
         $this->dialect = $dialect ?? DialectResolver::resolve($pdo);
         $this->quotedTable = $this->dialect->quoteIdentifier($tableName);
+
+        // Column names go through the dialect too: MySQL treats double-quoted names as string literals.
+        $this->quotedNameColumn = $this->dialect->quoteIdentifier('name');
+        $this->quotedLengthColumn = $this->dialect->quoteIdentifier('string_length');
+        $this->quotedValueColumn = $this->dialect->quoteIdentifier('counter_value');
     }
 
     /**
@@ -138,8 +146,8 @@ final readonly class PdoCounterStore implements CounterStoreInterface
         for ($attempt = 0; $attempt < $this->maximumCompareAndSwapAttempts; $attempt++) {
             // Read the current value.
             $stmt = $this->prepareStatement(
-                'SELECT "counter_value" FROM ' . $this->quotedTable
-                    . ' WHERE "name" = ? AND "string_length" = ?',
+                "SELECT {$this->quotedValueColumn} FROM {$this->quotedTable}"
+                    . " WHERE {$this->quotedNameColumn} = ? AND {$this->quotedLengthColumn} = ?",
             );
             $this->executeStatement($stmt, [$this->counterName, $length]);
             $current = $stmt->fetchColumn();
@@ -154,8 +162,9 @@ final readonly class PdoCounterStore implements CounterStoreInterface
 
             // Conditionally update.
             $updateStmt = $this->prepareStatement(
-                'UPDATE ' . $this->quotedTable
-                    . ' SET "counter_value" = ? WHERE "name" = ? AND "string_length" = ? AND "counter_value" = ?',
+                "UPDATE {$this->quotedTable} SET {$this->quotedValueColumn} = ?"
+                    . " WHERE {$this->quotedNameColumn} = ? AND {$this->quotedLengthColumn} = ?"
+                    . " AND {$this->quotedValueColumn} = ?",
             );
             $this->executeStatement($updateStmt, [$newValue, $this->counterName, $length, $oldValue]);
 
@@ -181,8 +190,9 @@ final readonly class PdoCounterStore implements CounterStoreInterface
     {
         try {
             $stmt = $this->prepareStatement(
-                'INSERT INTO ' . $this->quotedTable
-                    . ' ("name", "string_length", "counter_value") VALUES (?, ?, 0)',
+                "INSERT INTO {$this->quotedTable}"
+                    . " ({$this->quotedNameColumn}, {$this->quotedLengthColumn}, {$this->quotedValueColumn})"
+                    . ' VALUES (?, ?, 0)',
             );
             $this->executeStatement($stmt, [$this->counterName, $length]);
         } catch (CounterStoreException $e) {

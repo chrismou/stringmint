@@ -117,7 +117,7 @@ final class FeistelPermutationTest extends TestCase
         $this->assertLessThan(50, $consecutiveCount);
     }
 
-    // --- tweak (A1) ---
+    // --- tweak ---
 
     #[Test]
     public function testDifferentTweaksProduceDifferentOutputsStatistically(): void

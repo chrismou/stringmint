@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Chrismou\StringMint\Tests\Unit;
 
+use Chrismou\StringMint\Alphabet\AlphabetInterface;
 use Chrismou\StringMint\Alphabet\Generic;
 use Chrismou\StringMint\Alphabet\UrlSafe;
+use Chrismou\StringMint\Exception\InvalidAlphabetException;
 use Chrismou\StringMint\Exception\InvalidLengthException;
 use Chrismou\StringMint\Keyspace;
 use Chrismou\StringMint\Tests\Support\ConfigurableAlphabet;
@@ -14,6 +16,49 @@ use PHPUnit\Framework\TestCase;
 
 final class KeyspaceTest extends TestCase
 {
+    // --- constructor ---
+
+    #[Test]
+    public function testRejectsAHandRolledAlphabetWithASingleSymbol(): void
+    {
+        $this->expectException(InvalidAlphabetException::class);
+        new Keyspace(self::alphabetOfSize(1));
+    }
+
+    #[Test]
+    public function testRejectsAHandRolledAlphabetWithNoSymbols(): void
+    {
+        $this->expectException(InvalidAlphabetException::class);
+        new Keyspace(self::alphabetOfSize(0));
+    }
+
+    /**
+     * Builds an AlphabetInterface that bypasses AbstractAlphabet's validation and reports the given size.
+     */
+    private static function alphabetOfSize(int $size): AlphabetInterface
+    {
+        return new class ($size) implements AlphabetInterface {
+            public function __construct(private readonly int $size)
+            {
+            }
+
+            public function size(): int
+            {
+                return $this->size;
+            }
+
+            public function characterAt(int $position): string
+            {
+                return 'a';
+            }
+
+            public function isReserved(string $candidate): bool
+            {
+                return false;
+            }
+        };
+    }
+
     // --- capacityForLength ---
 
     #[Test]

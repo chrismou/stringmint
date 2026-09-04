@@ -37,7 +37,7 @@ final class EndToEndTest extends PdoTestCase
     {
         $pdo = $pdoFactory();
         (new CounterTableInstaller($pdo))->install();
-        $pdo->exec('CREATE TABLE IF NOT EXISTS "links" ("slug" TEXT NOT NULL PRIMARY KEY)');
+        self::createLinksTable($pdo);
 
         $alphabet = new Generic('abcdef');
         $policy = new LengthPolicy(3, 5);
@@ -55,8 +55,7 @@ final class EndToEndTest extends PdoTestCase
 
         for ($i = 0; $i < 5000; $i++) {
             $slug = $generator->generateWithAutoLengthIncrement();
-            $insertStmt = $pdo->prepare('INSERT INTO "links" ("slug") VALUES (?)');
-            $insertStmt->execute([$slug]);
+            self::insertLink($pdo, $slug);
             $len = strlen($slug);
             $lengthCounts[$len] = ($lengthCounts[$len] ?? 0) + 1;
             $generated[] = $slug;
@@ -74,7 +73,7 @@ final class EndToEndTest extends PdoTestCase
     {
         $pdo = $pdoFactory();
         (new CounterTableInstaller($pdo))->install();
-        $pdo->exec('CREATE TABLE IF NOT EXISTS "links" ("slug" TEXT NOT NULL PRIMARY KEY)');
+        self::createLinksTable($pdo);
 
         $alphabet = new Generic('abcdef');
         $policy = new LengthPolicy(3, 5);
@@ -89,8 +88,7 @@ final class EndToEndTest extends PdoTestCase
 
         for ($i = 0; $i < 216; $i++) {
             $slug = $generator->generateWithAutoLengthIncrement();
-            $insertStmt = $pdo->prepare('INSERT INTO "links" ("slug") VALUES (?)');
-            $insertStmt->execute([$slug]);
+            self::insertLink($pdo, $slug);
         }
 
         $this->expectException(KeyspaceExhaustedException::class);
@@ -126,7 +124,7 @@ final class EndToEndTest extends PdoTestCase
     {
         $pdo = $pdoFactory();
         (new CounterTableInstaller($pdo))->install();
-        $pdo->exec('CREATE TABLE IF NOT EXISTS "links" ("slug" TEXT NOT NULL PRIMARY KEY)');
+        self::createLinksTable($pdo);
 
         $alphabet = new Generic('abcdef');
         $policy = new LengthPolicy(3, 5);
@@ -142,8 +140,7 @@ final class EndToEndTest extends PdoTestCase
         $generated = [];
         for ($i = 0; $i < 50; $i++) {
             $slug = $generator->generateWithAutoLengthIncrement();
-            $insertStmt = $pdo->prepare('INSERT INTO "links" ("slug") VALUES (?)');
-            $insertStmt->execute([$slug]);
+            self::insertLink($pdo, $slug);
             $generated[] = $slug;
         }
 
@@ -166,7 +163,7 @@ final class EndToEndTest extends PdoTestCase
     {
         $pdo = $pdoFactory();
         (new CounterTableInstaller($pdo))->install();
-        $pdo->exec('CREATE TABLE IF NOT EXISTS "links" ("slug" TEXT NOT NULL PRIMARY KEY)');
+        self::createLinksTable($pdo);
 
         $alphabet = new HexAlphabet();
         $policy = new LengthPolicy(2, 3);
@@ -182,8 +179,7 @@ final class EndToEndTest extends PdoTestCase
         $generated = [];
         for ($i = 0; $i < 300; $i++) {
             $slug = $generator->generateWithAutoLengthIncrement();
-            $insertStmt = $pdo->prepare('INSERT INTO "links" ("slug") VALUES (?)');
-            $insertStmt->execute([$slug]);
+            self::insertLink($pdo, $slug);
             $generated[] = $slug;
         }
 

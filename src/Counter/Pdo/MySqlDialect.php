@@ -56,7 +56,7 @@ final class MySqlDialect implements PdoDialectInterface
     /**
      * Increments the counter using LAST_INSERT_ID() and returns the new value, or null on no match.
      *
-     * lastInsertId() returns a string on PDO/MySQL; we cast to int as documented in side effect 11.
+     * lastInsertId() returns a string on PDO/MySQL, so the value is cast to int.
      *
      * @return int|null int (new value after increment) | null (row not found: rowCount === 0)
      *

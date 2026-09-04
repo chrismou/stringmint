@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chrismou\StringMint\Tests\Unit\Exception;
 
 use Chrismou\StringMint\Exception\CounterStoreException;
+use Chrismou\StringMint\Exception\ExistenceCheckException;
 use Chrismou\StringMint\Exception\InvalidAlphabetException;
 use Chrismou\StringMint\Exception\InvalidLengthException;
 use Chrismou\StringMint\Exception\InvalidTableNameException;
@@ -62,6 +63,14 @@ final class ExceptionHierarchyTest extends TestCase
     public function testCounterStoreExceptionImplementsStringMintExceptionAndExtendsRuntimeException(): void
     {
         $e = new CounterStoreException('test');
+        $this->assertInstanceOf(StringMintExceptionInterface::class, $e);
+        $this->assertInstanceOf(RuntimeException::class, $e);
+    }
+
+    #[Test]
+    public function testExistenceCheckExceptionImplementsStringMintExceptionAndExtendsRuntimeException(): void
+    {
+        $e = new ExistenceCheckException('test');
         $this->assertInstanceOf(StringMintExceptionInterface::class, $e);
         $this->assertInstanceOf(RuntimeException::class, $e);
     }
