@@ -1,0 +1,8 @@
+/vendor
+/.phpunit.cache
+/.phpstan.cache
+/phpunit.xml
+composer.lock
+.idea
+.pint.cache
+plans/

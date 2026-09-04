@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         cacheDirectory=".phpunit.cache"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory suffix="Test.php">tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Integration">
+            <directory suffix="Test.php">tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+    </source>
+    <php>
+        <env name="STRINGMINT_MYSQL_DSN" value=""/>
+        <env name="STRINGMINT_MYSQL_USER" value=""/>
+        <env name="STRINGMINT_MYSQL_PASSWORD" value=""/>
+        <env name="STRINGMINT_PGSQL_DSN" value=""/>
+        <env name="STRINGMINT_PGSQL_USER" value=""/>
+        <env name="STRINGMINT_PGSQL_PASSWORD" value=""/>
+    </php>
+</phpunit>

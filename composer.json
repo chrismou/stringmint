@@ -1,0 +1,63 @@
+{
+    "name": "chrismou/stringmint",
+    "description": "Collision-free, non-sequential, URL-safe short strings for PHP. Unique by construction, with no existence checks or retries required, and zero dependencies.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "unique",
+        "random",
+        "string",
+        "url",
+        "slug",
+        "short-url",
+        "token",
+        "id",
+        "pdo"
+    ],
+    "authors": [
+        {
+            "name": "Chris Chrisostomou",
+            "email": "dev@mou.me",
+            "homepage": "https://mou.me"
+        }
+    ],
+    "support": {
+        "source": "https://github.com/chrismou/stringmint",
+        "issues": "https://github.com/chrismou/stringmint/issues",
+        "docs": "https://github.com/chrismou/stringmint/README.md"
+    },
+    "require": {
+        "php": "^8.2"
+    },
+    "require-dev": {
+        "ext-pdo_sqlite": "*",
+        "laravel/pint": "^1.18",
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^11.0"
+    },
+    "suggest": {
+        "ext-pdo": "Required for PdoCounterStore, PdoColumnExistenceChecker and CounterTableInstaller"
+    },
+    "autoload": {
+        "psr-4": {
+            "Chrismou\\StringMint\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Chrismou\\StringMint\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:coverage": "phpunit --coverage-text",
+        "lint": "pint --test",
+        "lint:fix": "pint",
+        "analyse": "phpstan analyse --memory-limit=1G"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
