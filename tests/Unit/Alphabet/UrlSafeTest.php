@@ -52,10 +52,11 @@ final class UrlSafeTest extends TestCase
     }
 
     #[Test]
-    public function testInheritsTheTrailingDotGuard(): void
+    public function testInheritsTheTrailingCharacterGuard(): void
     {
         $alphabet = new UrlSafe();
         $this->assertTrue($alphabet->isReserved('a.'));
+        $this->assertTrue($alphabet->isReserved('a-'));
         $this->assertFalse($alphabet->isReserved('a'));
     }
 }

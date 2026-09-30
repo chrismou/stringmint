@@ -54,10 +54,11 @@ final class Base64UrlTest extends TestCase
     }
 
     #[Test]
-    public function testInheritsTheTrailingDotGuard(): void
+    public function testInheritsTheTrailingCharacterGuard(): void
     {
         $alphabet = new Base64Url();
         $this->assertTrue($alphabet->isReserved('a.'));
+        $this->assertTrue($alphabet->isReserved('a-'));
         $this->assertFalse($alphabet->isReserved('a'));
     }
 }

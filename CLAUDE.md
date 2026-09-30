@@ -61,7 +61,7 @@ Supporting pieces, each in its own namespace under `src/`:
   the escalation ceiling for auto-increment.
 - **`Alphabet/`**: `AlphabetInterface` (`size()`, `characterAt()`, `isReserved()`) with
   `AbstractAlphabet` doing UTF-8 splitting and validation. `AbstractUrlSafeAlphabet` adds the
-  RFC 3986 unreserved-set check and reserves any output ending in `.`. The four presets
+  RFC 3986 unreserved-set check and reserves any output ending in `.` or `-`. The four presets
   (`UrlSafe`, `Alphanumeric`, `LowercaseAlphanumeric`, `Base64Url`) are final classes with a
   `CHARACTERS` constant; `Generic` takes any string and reserves nothing. Custom reservation rules
   extend `AbstractUrlSafeAlphabet`, not a preset.
