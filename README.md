@@ -245,14 +245,15 @@ All alphabets live in the `Chrismou\StringMint\Alphabet` namespace.
 | `new LowercaseAlphanumeric()` | a-z 0-9 | 36 | Safe for case-insensitive DB collations |
 | `new Base64Url()` | A-Z a-z 0-9 `-_` | 64 | Base64url character set |
 | `new Generic($chars)` | any UTF-8 characters | varies | No URL-safety check, reserves nothing |
-| extend `AbstractUrlSafeAlphabet` | your subset of `-._~` A-Z a-z 0-9 | varies | Keeps the URL-safety check and trailing-dot guard |
+| extend `AbstractUrlSafeAlphabet` | your subset of `-._~` A-Z a-z 0-9 | varies | Keeps the URL-safety check and trailing-character guard |
 | extend `AbstractAlphabet` | any UTF-8 characters | varies | See "Custom alphabets" below |
 
-**Trailing-dot guard:** Every URL-safe alphabet (`UrlSafe`, `Alphanumeric`, `LowercaseAlphanumeric`, `Base64Url`,
-and anything extending `AbstractUrlSafeAlphabet`) reserves any output ending in `.`. That covers `.` and `..`,
-which every URL parser normalises away so they would silently collide with other paths, and strings like `abc.`,
-where chat clients and email linkifiers drop the trailing dot. `Generic` and
-custom alphabets built on `AbstractAlphabet` reserve nothing unless they override `isReserved()`.
+**Trailing-character guard:** Every URL-safe alphabet (`UrlSafe`, `Alphanumeric`, `LowercaseAlphanumeric`,
+`Base64Url`, and anything extending `AbstractUrlSafeAlphabet`) reserves any output ending in `.` or `-`. The dot
+covers `.` and `..`, which every URL parser normalises away so they would silently collide with other paths, and
+strings like `abc.`, where chat clients and email linkifiers drop the trailing dot. The dash covers strings like
+`abc-`, where some email clients stop the link before the dash and break the URL. `Generic` and custom alphabets
+built on `AbstractAlphabet` reserve nothing unless they override `isReserved()`.
 
 **Case-insensitive collations:** MySQL `utf8mb4_general_ci` and SQL Server defaults treat `abc`
 and `ABC` as equal. A unique index will reject strings the generator considers distinct. Use
@@ -305,7 +306,7 @@ Each UTF-8 character is one symbol, so accented letters, Greek or emoji work as-
 string from that alphabet is 8 bytes. Size your column accordingly.
 
 To keep the URL-safe character set and only exclude a few outputs, extend `AbstractUrlSafeAlphabet` instead -
-you keep the RFC 3986 validation and the trailing-dot guard:
+you keep the RFC 3986 validation and the trailing-character guard:
 
 ```php
 use Chrismou\StringMint\Alphabet\AbstractUrlSafeAlphabet;

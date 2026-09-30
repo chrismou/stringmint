@@ -85,12 +85,26 @@ final class AbstractUrlSafeAlphabetTest extends TestCase
     }
 
     #[Test]
+    public function testIsReservedReturnsTrueForAnyTrailingDash(): void
+    {
+        $alphabet = new class (AbstractUrlSafeAlphabet::RFC3986_UNRESERVED) extends AbstractUrlSafeAlphabet {};
+        $this->assertTrue($alphabet->isReserved('-'));
+        $this->assertTrue($alphabet->isReserved('--'));
+        $this->assertTrue($alphabet->isReserved('a-'));
+        $this->assertTrue($alphabet->isReserved('abc.1-'));
+    }
+
+    #[Test]
     public function testIsReservedReturnsFalseForOtherStrings(): void
     {
         $alphabet = new class (AbstractUrlSafeAlphabet::RFC3986_UNRESERVED) extends AbstractUrlSafeAlphabet {};
         $this->assertFalse($alphabet->isReserved('a'));
         $this->assertFalse($alphabet->isReserved('.a'));
         $this->assertFalse($alphabet->isReserved('a.b'));
+        $this->assertFalse($alphabet->isReserved('-a'));
+        $this->assertFalse($alphabet->isReserved('a-b'));
+        $this->assertFalse($alphabet->isReserved('a_'));
+        $this->assertFalse($alphabet->isReserved('a~'));
         $this->assertFalse($alphabet->isReserved(''));
     }
 
@@ -102,14 +116,15 @@ final class AbstractUrlSafeAlphabetTest extends TestCase
         $extended = new class (AbstractUrlSafeAlphabet::RFC3986_UNRESERVED) extends AbstractUrlSafeAlphabet {
             public function isReserved(string $candidate): bool
             {
-                return parent::isReserved($candidate) || str_starts_with($candidate, '-');
+                return parent::isReserved($candidate) || str_starts_with($candidate, '_');
             }
         };
 
         $this->assertSame(66, $extended->size());
         $this->assertTrue($extended->isReserved('.'));
-        $this->assertTrue($extended->isReserved('-a'));
-        $this->assertFalse($extended->isReserved('a-'));
+        $this->assertTrue($extended->isReserved('a-'));
+        $this->assertTrue($extended->isReserved('_a'));
+        $this->assertFalse($extended->isReserved('a_'));
     }
 
     #[Test]

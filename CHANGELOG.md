@@ -16,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AbstractAlphabet` base class: one symbol per UTF-8 character (multibyte characters and emoji included);
   validates at least two distinct characters; override `isReserved()` to exclude outputs.
 - `AbstractUrlSafeAlphabet` base class: restricts characters to the RFC 3986 unreserved set and reserves any
-  output ending in `.` (including `.` and `..`); extend it for custom URL-safe subsets or extra `isReserved()` rules.
+  output ending in `.` (including `.` and `..`) or `-`, since email linkifiers drop either from the end of a URL;
+  extend it for custom URL-safe subsets or extra `isReserved()` rules.
 - URL-safe presets `UrlSafe` (default, full 66-char unreserved set), `Alphanumeric` (62), `LowercaseAlphanumeric` (36)
   and `Base64Url` (64), each a fixed-set class extending `AbstractUrlSafeAlphabet`.
 - `Generic` alphabet: any UTF-8 character set passed to the constructor, no URL-safety check, reserves nothing.

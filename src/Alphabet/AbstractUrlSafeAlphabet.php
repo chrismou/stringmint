@@ -10,11 +10,13 @@ use Chrismou\StringMint\Exception\InvalidAlphabetException;
  * Base class for alphabets restricted to the RFC 3986 unreserved set (A-Z a-z 0-9 - . _ ~).
  *
  * Validates every character against the unreserved set on top of AbstractAlphabet's checks, and reserves any
- * output ending in ".": that covers "." and "..", which every URL parser normalises away, and strings like
- * "abc.", where the trailing dot is dropped by chat clients and email linkifiers. Nothing else is reserved.
+ * output ending in "." or "-": "." covers "." and "..", which every URL parser normalises away, and strings
+ * like "abc.", where the trailing dot is dropped by chat clients and email linkifiers. "-" covers strings like
+ * "abc-", where some email clients stop the link before the dash and break the URL. Nothing else is reserved.
  *
  * Extend this class to build a URL-safe alphabet from your own subset of the unreserved characters, or to
- * exclude more outputs by overriding isReserved() (call parent::isReserved() to keep the trailing-dot guard).
+ * exclude more outputs by overriding isReserved() (call parent::isReserved() to keep the trailing-character
+ * guard).
  */
 abstract class AbstractUrlSafeAlphabet extends AbstractAlphabet
 {
@@ -31,14 +33,15 @@ abstract class AbstractUrlSafeAlphabet extends AbstractAlphabet
     }
 
     /**
-     * Returns true for any candidate ending in ".", which covers the "." and ".." path-segment hazards and
-     * strings that auto-linkers would truncate.
+     * Returns true for any candidate ending in "." or "-": "." covers the "." and ".." path-segment hazards,
+     * and both characters are dropped from the end of a URL by chat clients and email linkifiers.
      *
-     * Subclasses that extend this method should call parent::isReserved() to preserve the trailing-dot guard.
+     * Subclasses that extend this method should call parent::isReserved() to preserve the trailing-character
+     * guard.
      */
     public function isReserved(string $candidate): bool
     {
-        return str_ends_with($candidate, '.');
+        return str_ends_with($candidate, '.') || str_ends_with($candidate, '-');
     }
 
     /**

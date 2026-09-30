@@ -54,10 +54,11 @@ final class AlphanumericTest extends TestCase
     }
 
     #[Test]
-    public function testInheritsTheTrailingDotGuard(): void
+    public function testInheritsTheTrailingCharacterGuard(): void
     {
         $alphabet = new Alphanumeric();
         $this->assertTrue($alphabet->isReserved('a.'));
+        $this->assertTrue($alphabet->isReserved('a-'));
         $this->assertFalse($alphabet->isReserved('a'));
     }
 }
